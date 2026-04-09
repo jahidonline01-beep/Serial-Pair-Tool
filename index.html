@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Serial Pair Tool</title>
+<style>
+  :root{
+    --bgA:#ffe7c2;
+    --bgB:#e8f1ff;
+    --bgC:#f4e9ff;
+    --card:#ffffffee;
+    --line:#e7ebf5;
+    --text:#253246;
+
+    --title1:#ff6b7d;
+    --title2:#8b5cf6;
+    --title3:#1fa2ff;
+
+    --check1:#ff9a1a; --check2:#ff6f00;
+    --clear1:#55627b; --clear2:#394557;
+    --copy1:#17db61; --copy2:#00c853;
+    --open1:#7a7cff; --open2:#5e62f3;
+    --nav1:#2ea1ff; --nav2:#1976f2;
+    --extra1:#12a89b; --extra2:#0a8278;
+
+    --view1:#fff4e8; --view2:#eef0ff; --view3:#dffbfb;
+    --shadow:0 20px 50px rgba(79,105,170,.16);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    padding:8px;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    color:var(--text);
+    background:
+      radial-gradient(circle at top left,#ffd89a 0%,transparent 24%),
+      radial-gradient(circle at top right,#bfe0ff 0%,transparent 26%),
+      radial-gradient(circle at bottom left,#e5c9ff 0%,transparent 22%),
+      linear-gradient(120deg,var(--bgA),var(--bgB) 55%,var(--bgC));
+  }
+  .card{
+    max-width:500px;
+    margin:auto;
+    background:var(--card);
+    border:1px solid #1f2937;
+    border-radius:18px;
+    padding:12px;
+    box-shadow:var(--shadow);
+    backdrop-filter:blur(8px);
+  }
+  h1{
+    margin:2px 0 12px;
+    text-align:center;
+    font-size:19px;
+    font-weight:900;
+    background:linear-gradient(90deg,var(--title1),var(--title2),var(--title3));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    letter-spacing:.2px;
+  }
+  textarea{
+    width:100%;
+    height:92px;
+    border-radius:18px;
+    border:1px solid #334155;
+    padding:10px;
+    font-size:14px;
+    outline:none;
+    resize:vertical;
+    background:#0f172a;
+    color:#e5e7eb;
+  }
+  textarea:focus{
+    border-color:#d2d2ff;
+    box-shadow:0 0 0 3px rgba(99,102,241,.18);
+  }
+  .row{display:grid;gap:8px;margin-top:10px}
+  .row-1{grid-template-columns:1fr}
+  .row-2{grid-template-columns:1fr 1fr}
+  button{
+    border:none;
+    border-radius:18px;
+    min-height:46px;
+    padding:9px 12px;
+    font-size:11px;
+    font-weight:900;
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(0,0,0,.08);
+  }
+  .check{background:linear-gradient(180deg,var(--check1),var(--check2))}
+  .clear{background:linear-gradient(180deg,var(--clear1),var(--clear2))}
+  .copy{background:linear-gradient(180deg,var(--copy1),var(--copy2))}
+  .open{background:linear-gradient(180deg,var(--open1),var(--open2))}
+  .nav{background:linear-gradient(180deg,var(--nav1),var(--nav2))}
+  .extra{background:linear-gradient(180deg,var(--extra1),var(--extra2))}
+  .viewer{
+    margin-top:8px;
+    min-height:52px;
+    border-radius:12px;
+    background:linear-gradient(90deg,#111827,#172033,#0f1f2f);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-weight:900;
+    font-size:15px;
+    padding:10px;
+    color:#e5e7eb;
+    border:1px solid #334155;
+    word-break:break-word;
+  }
+  .stats{
+    margin-top:8px;
+    text-align:center;
+    font-size:11px;
+    font-weight:700;
+    color:#cbd5e1;
+    background:#0f172a;
+    border:1px solid #334155;
+    padding:7px 9px;
+    border-radius:16px;
+  }
+  .output{
+    margin-top:8px;
+    height:92px;
+    overflow:auto;
+    white-space:pre-wrap;
+    border:1px solid #334155;
+    border-radius:18px;
+    background:#0f172a;
+    padding:10px;
+    font-size:11px;
+    line-height:1.35;
+    color:#e5e7eb;
+  }
+  .footer{margin-top:8px;text-align:center}
+  .footer a{color:#60a5fa;text-decoration:none;font-weight:700}
+  .toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:#020617;
+    color:#fff;
+    padding:6px 9px;
+    border-radius:999px;
+    font-size:11px;
+    opacity:0;
+    transition:.25s;
+    z-index:9999;
+  }
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Serial Pair Tool</h1>
+
+  <textarea id="input" placeholder="Paste lines here..."></textarea>
+
+  <div class="row row-1">
+    <button class="check" id="btnCheck">Check</button>
+    <button class="clear" id="btnClear">Clear</button>
+  </div>
+
+  <div class="viewer" id="viewer">-</div>
+
+  <div class="row row-1">
+    <button class="copy" id="btnCopy">Copy</button>
+    <button class="open" id="btnOpen">Open</button>
+  </div>
+
+  <div class="row row-2">
+    <button class="nav" id="btnPrev">Previous</button>
+    <button class="nav" id="btnNext">Next</button>
+  </div>
+
+  <div class="row row-1">
+    <button class="extra" id="btnCopyAll">Copy All</button>
+    <button class="extra" id="btnSheet">Google Sheet Copy</button>
+  </div>
+
+  <div class="stats" id="stats">Total: 0 | Index: 0/0 | Removed: 0 | Invalid: 0</div>
+  <div class="output" id="output"></div>
+
+  <div class="footer">
+    <a href="https://t.me/JAHID_1" target="_blank" rel="noopener">@JAHID_1</a>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<textarea id="hidden" style="position:absolute;left:-9999px;top:-9999px;"></textarea>
+
+<script>
+(() => {
+  const input = document.getElementById('input');
+  const viewer = document.getElementById('viewer');
+  const output = document.getElementById('output');
+  const stats = document.getElementById('stats');
+  const hidden = document.getElementById('hidden');
+  const toastEl = document.getElementById('toast');
+
+  const ALLOWED_F2 = ["123456","1234567","12345678","123456789"];
+  const ALLOWED_SET = new Set(ALLOWED_F2);
+
+  let data = [];
+  let index = 0;
+  let invalid = 0;
+  let removed = 0;
+  let toastTimer = null;
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1200);
+  }
+
+  function parsePairs(text){
+    const rows = [];
+    let localRemoved = 0;
+    const seenF1 = new Set();
+
+    // Accept any messy format, but only extract:
+    // F1 = exactly 15 digits
+    // F2 = one of allowed values
+    //
+    // Examples supported:
+    // 100004618759269|123456
+    // = 100001737360267 = 123456 =
+    // text 100004618759269 123456 more text
+    const validRe = /(?:^|[^\d])(\d{15})(?:[^\d]+)(123456789|12345678|1234567|123456)(?!\d)/g;
+
+    let m;
+    while ((m = validRe.exec(text)) !== null){
+      const f1 = m[1];
+      const f2 = m[2];
+
+      if (seenF1.has(f1)){
+        localRemoved++;
+        continue;
+      }
+      seenF1.add(f1);
+      rows.push([f1, f2]);
+    }
+
+    // Serial-by-serial output by F2 order
+    const ordered = [];
+    for (const f2 of ALLOWED_F2){
+      for (const row of rows){
+        if (row[1] === f2) ordered.push(row);
+      }
+    }
+
+    // Count malformed pipe-like entries only as invalid
+    const allPipeLike = text.match(/\d+\s*\|\s*\d+/g) || [];
+    let validPipeCount = 0;
+    const validPipeRe = /(?:^|[^\d])\d{15}\s*\|\s*(123456789|12345678|1234567|123456)(?!\d)/g;
+    while (validPipeRe.exec(text) !== null) validPipeCount++;
+    const localInvalid = Math.max(0, allPipeLike.length - validPipeCount);
+
+    return { rows: ordered, removed: localRemoved, invalid: localInvalid };
+  }
+
+  function render(){
+    if (!data.length){
+      viewer.textContent = "-";
+      output.textContent = "";
+      stats.textContent = `Total: 0 | Index: 0/0 | Removed: ${removed} | Invalid: ${invalid}`;
+      return;
+    }
+    if (index < 0) index = 0;
+    if (index >= data.length) index = data.length - 1;
+
+    viewer.textContent = data[index][0] + " " + data[index][1];
+    output.textContent = data.map(pair => pair[0] + " " + pair[1]).join("\n");
+    stats.textContent = `Total: ${data.length} | Index: ${index + 1}/${data.length} | Removed: ${removed} | Invalid: ${invalid}`;
+  }
+
+  async function copyText(text){
+    // Use native Android bridge (most reliable in WebView)
+    if (window.AndroidBridge){
+      try{
+        const ok = AndroidBridge.copy(text);
+        if(ok){ showToast("Copied"); return true; }
+      }catch(e){}
+    }
+    // Clipboard API (works in https context)
+    try{
+      if (navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(text);
+        showToast("Copied");
+        return true;
+      }
+    }catch(e){}
+    // Fallback execCommand
+    try{
+      hidden.value = text;
+      hidden.focus();
+      hidden.select();
+      hidden.setSelectionRange(0, hidden.value.length);
+      const ok = document.execCommand('copy');
+      if(ok) showToast("Copied");
+      return ok;
+    }catch(e){
+      return false;
+    }
+  }
+
+  function doCheck(){
+    const parsed = parsePairs(input.value || "");
+    data = parsed.rows;
+    removed = parsed.removed;
+    invalid = parsed.invalid;
+    index = 0;
+    render();
+    showToast("Checked");
+  }
+
+  function doClear(){
+    input.value = "";
+    data = [];
+    index = 0;
+    invalid = 0;
+    removed = 0;
+    render();
+  }
+
+  async function doCopyCurrent(){
+    if (!data.length){ showToast("No data"); return; }
+    const ok = await copyText(data[index][0] + " " + data[index][1]);
+    showToast(ok ? "Copied" : "Copy failed");
+  }
+
+  async function doCopyAll(){
+    if (!data.length){ showToast("No data"); return; }
+    const ok = await copyText(data.map(d => d[0] + " " + d[1]).join("\n"));
+    showToast(ok ? "Copied all" : "Copy failed");
+  }
+
+  async function doCopySheets(){
+    if (!data.length){ showToast("No data"); return; }
+    const ok = await copyText(data.map(d => d[0] + "\t" + d[1]).join("\n"));
+    showToast(ok ? "Sheets ready" : "Copy failed");
+  }
+
+  function doPrev(){
+    if (!data.length) return;
+    index = (index - 1 + data.length) % data.length;
+    render();
+  }
+
+  function doNext(){
+    if (!data.length) return;
+    index = (index + 1) % data.length;
+    render();
+  }
+
+  async function doOpen(){
+    if (!data.length){ showToast("No data"); return; }
+    const txt = data[index][0] + " " + data[index][1];
+
+    // Copy first so it's available regardless
+    await copyText(txt);
+
+    // Use native Android share sheet (most reliable)
+    if (window.AndroidBridge){
+      try{
+        AndroidBridge.share(txt);
+        return;
+      }catch(e){}
+    }
+
+    // Web Share API fallback
+    if (navigator.share){
+      try{
+        await navigator.share({text: txt});
+        return;
+      }catch(e){}
+    }
+
+    // Android intent URL fallback
+    try{
+      const intentUrl =
+        "intent:#Intent;" +
+        "action=android.intent.action.SEND;" +
+        "type=text/plain;" +
+        "S.android.intent.extra.TEXT=" + encodeURIComponent(txt) + ";" +
+        "end";
+      window.location.href = intentUrl;
+      return;
+    }catch(e){}
+
+    showToast("Copied! Paste manually");
+  }
+
+  document.getElementById('btnCheck').addEventListener('click', doCheck);
+  document.getElementById('btnClear').addEventListener('click', doClear);
+  document.getElementById('btnCopy').addEventListener('click', doCopyCurrent);
+  document.getElementById('btnOpen').addEventListener('click', doOpen);
+  document.getElementById('btnPrev').addEventListener('click', doPrev);
+  document.getElementById('btnNext').addEventListener('click', doNext);
+  document.getElementById('btnCopyAll').addEventListener('click', doCopyAll);
+  document.getElementById('btnSheet').addEventListener('click', doCopySheets);
+
+  render();
+})();
+</script>
+</body>
+</html>
